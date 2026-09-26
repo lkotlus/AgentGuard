@@ -12,7 +12,7 @@ import logging
 from pathlib import Path
 from watchdog.events import FileModifiedEvent, LoggingEventHandler
 
-from models import LogLine, AgentView
+from models import LogLine, AgentView, Confidences
 
 PATH_ARGS = ["target_path", "path"]
 
@@ -24,6 +24,8 @@ class AGEventHandler(LoggingEventHandler):
         super().__init__()
 
     def read_file(self, fpath: bytes | str) -> list[LogLine]:
+        """Returns a list of all valid lines."""
+
         with open(fpath, "r") as f:
             contents = f.read()
 
@@ -49,6 +51,8 @@ class AGEventHandler(LoggingEventHandler):
         return parsed_lines
 
     def extract_paths(self, fline: LogLine) -> list[str]:
+        """Returns a list of all paths in the arguments field"""
+
         found_paths = []
         for parg in PATH_ARGS:
             if parg in fline.arguments:
@@ -56,24 +60,31 @@ class AGEventHandler(LoggingEventHandler):
 
         return found_paths
 
-    def validate_path(self, fline: LogLine) -> bool:
+    def validate_path(self, fline: LogLine) -> float:
+        """Binary check for path traversal attempts"""
+
         paths = self.extract_paths(fline)
-        
         for p in paths:
             path = (self.allowed_path / Path(p)).resolve()
             
             if not path.is_relative_to(self.allowed_path):
-                return False
+                return 0.0
 
-        return True
+        return 1.0
 
     def on_modified(self, event):
+        """Main handler code"""
+
         if type(event) is not FileModifiedEvent:
             return
 
         flines = self.read_file(event.src_path)
         for fline in flines:
-            if (self.validate_path(fline)):
+            confidences = Confidences(
+                path_traversal=self.validate_path(fline)
+            )
+
+            if (confidences.path_traversal == 0):
                 print("New operation was clean.\n")
             else:
                 print("New log has path issue:")
