@@ -4,7 +4,8 @@ import argparse
 from pathlib import Path
 from watchdog.observers import Observer
 
-from AGEventHandler import AGEventHandler
+from event_handler import AGEventHandler
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="File watching and static analysis script.")

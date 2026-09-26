@@ -23,7 +23,7 @@ class AGEventHandler(LoggingEventHandler):
 
         super().__init__()
 
-    def read_file(self, fpath) -> list[LogLine]:
+    def read_file(self, fpath: bytes | str) -> list[LogLine]:
         with open(fpath, "r") as f:
             contents = f.read()
 
