@@ -12,8 +12,8 @@ import logging
 from pathlib import Path
 from watchdog.events import FileModifiedEvent, LoggingEventHandler
 
-from models import LogLine, AgentView, Confidences
-from agent_guard import dispatch_finding
+from agent_guard.models import LogLine, AgentView, Confidences
+from agent_guard.dispatch import dispatch_finding
 
 PATH_ARGS = ["target_path", "path"]
 

@@ -5,8 +5,9 @@ Session registry! We need to map session IDs to agents.
 import asyncio
 import threading
 from functools import partial
-from models import LogLine, AgentView, Confidences
-from agent import AgentSession
+
+from agent_guard.models import LogLine, AgentView, Confidences
+from agent_guard.agent import AgentSession
 
 class SessionRegistry:
     def __init__(self):

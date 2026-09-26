@@ -5,7 +5,7 @@ other evidence.
 """
 
 from models import LogLine, AgentView, Confidences
-from registry import registry
+from agent_guard.registry import registry
 
 def dispatch_finding(
     log: LogLine, 

@@ -7,7 +7,7 @@ decisions based off of all present data.
 import json
 import ollama
 from dataclasses import dataclass, asdict
-from models import AgentView, Confidences
+from agent_guard.models import AgentView, Confidences
 
 SYSTEM_PROMPT = """You are a security analyst reviewing tool calls made by an \
 autonomous coding agent operating against sandboxed MCP servers (filesystem, \
