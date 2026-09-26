@@ -28,6 +28,7 @@ class LogLine:
     task_id: str
     session_id: str
     scenario_tag: str
+    annotations: str
 
 
 @dataclass(frozen=True)

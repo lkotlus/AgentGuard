@@ -41,7 +41,6 @@ class AGEventHandler(LoggingEventHandler):
                 continue
             try:
                 parsed_lines.append(LogLine(**json.loads(line)))
-                parsed_lines[-1].pop("annotations", None)
                 self.fcontents[fpath] += line + '\n'
             except json.JSONDecodeError:
                 logging.warning("Incomplete or malformed jsonl.")
@@ -77,6 +76,6 @@ class AGEventHandler(LoggingEventHandler):
             if (self.validate_path(fline)):
                 print("New operation was clean.\n")
             else:
-                print("New log has path issue:\n")
+                print("New log has path issue:")
                 print(fline)
                 print("\n\n")
