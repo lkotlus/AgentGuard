@@ -26,13 +26,13 @@ class SessionRegistry:
         try:
             verdict = future.result()
         except Exception as e:
-            print(f"Agent evalutation failed:\n\t{log}\n\t{e}\n")
+            print(f"Agent evalutation failed (seq {log.seq}):\n\t{log}\n\t{e}\n")
             return
 
         if verdict.alert:
-            print(f"Agent alerted:\n\t{log}\n\t{verdict.reasoning}\n")
+            print(f"Anomalous log (agent detected, seq {log.seq}):\n\t{log}\n\t{verdict.reasoning}\n")
         else:
-            print(f"Agent suppressed (below threshold):\n\t{log}\n\t{verdict.reasoning}\n")
+            print(f"Agent suppressed (seq {log.seq}):\n\t{verdict.reasoning}\n")
 
     def dispatch(
         self,

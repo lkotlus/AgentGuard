@@ -13,6 +13,7 @@ from pathlib import Path
 from watchdog.events import FileModifiedEvent, LoggingEventHandler
 
 from models import LogLine, AgentView, Confidences
+from agent_guard import dispatch_finding
 
 PATH_ARGS = ["target_path", "path"]
 
@@ -68,9 +69,9 @@ class AGEventHandler(LoggingEventHandler):
             path = (self.allowed_path / Path(p)).resolve()
             
             if not path.is_relative_to(self.allowed_path):
-                return 0.0
+                return 1.0
 
-        return 1.0
+        return 0.0
 
     def on_modified(self, event):
         """Main handler code"""
@@ -83,10 +84,7 @@ class AGEventHandler(LoggingEventHandler):
             confidences = Confidences(
                 path_traversal=self.validate_path(fline)
             )
+            agent_view = AgentView.from_log_line(fline)
 
-            if (confidences.path_traversal == 0):
-                print("New operation was clean.\n")
-            else:
-                print("New log has path issue:")
-                print(fline)
-                print("\n\n")
+            print(f"Recieved a new log from {fline.session_id} (seq {fline.seq})\n")
+            dispatch_finding(fline, agent_view, confidences)

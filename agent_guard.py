@@ -15,6 +15,6 @@ def dispatch_finding(
     """Dispatches to agent."""
 
     if confidences.overall > 0.8:
-        print(f"Anomalous log (high signature match):\n\t{log}\n\t{confidences}\n")
+        print(f"Anomalous log (high signature match, seq {log.seq}):\n\t{log}\n\t{confidences}\n")
     else:
         registry.dispatch(log, agent_log, confidences)

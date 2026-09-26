@@ -76,7 +76,7 @@ class AgentSession:
         tool_calls = msg.get("tool_calls") or []
         if not tool_calls:
             # Report if the clanker just narrated stuff
-            raise RuntimeError(f"Stupid clunker didn't call submit_verdict: {msg.get('content')!r}")
+            raise RuntimeError(f"Agent didn't call submit_verdict: {msg.get('content')!r}")
 
         args = tool_calls[0]["function"]["arguments"]
         if isinstance(args, str):
