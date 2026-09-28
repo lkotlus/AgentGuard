@@ -4,7 +4,7 @@ get dispatched to agents, which then further evaluate based on
 other evidence.
 """
 
-from models import LogLine, AgentView, Confidences
+from agent_guard.models import LogLine, AgentView, Confidences
 from agent_guard.registry import registry
 
 def dispatch_finding(
