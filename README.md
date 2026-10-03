@@ -40,8 +40,8 @@ options:
                         Path to the agent root.
 ```
 
+### Example
 If you're running the ADOP testbed, you just need to provide the path to the agent's sandbox directory (`adop-cyse/testbed-repo/`) and the path to the ADOP log corpus (`adop-cyse/corpus/`). For example:
-
 ```
 $ python3 main.py -a /path/to/adop-cyse/testbed-repo/ -p /path/to/adop-cyse/corpus/
 
