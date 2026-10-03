@@ -17,15 +17,15 @@ if (-not $PyName) {
 if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
     $confirm = Read-Host "Ollama not found. Install it now? [y/N]"
     if ($confirm -match '^[Yy]$') {
-        winget install Ollama.Ollama
+        irm https://ollama.com/install.ps1 | iex
     } else {
         Write-Error "Ollama is required for AgentGuard, please install it."
         exit 1
     }
 }
 
-& $PyName -m venv venv
-& "venv\Scripts\$PyName.exe" -m pip install -r requirements.txt
+iex "$PyName -m venv venv"
+iex "venv\Scripts\python.exe -m pip install -r requirements.txt"
 
 ollama pull qwen2.5:7b
 
@@ -44,6 +44,6 @@ $Banner = @"
 
 Write-Output $Banner
 Write-Output ""
-& "venv\Scripts\$PyName.exe" main.py -h
+& "venv\Scripts\python.exe" main.py -h
 
 Write-Host "`nRemember to run venv\Scripts\Activate.ps1!" -ForegroundColor Red
