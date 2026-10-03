@@ -3,10 +3,24 @@
 ### Current stage: PoC
 Not yet completed, currently only has signature-based detection for path traversal attempts. The agentic analysis is rudimentary and requires fine-tuning as well.
 
-### Usage
+### Installation
+Both Linux and Windows require for you to have Python3 installed.
+
+#### Linux
+```bash
+$ ./install.sh
 ```
-(venv) [lkotlus@m1n1m3] [.../CYSE/587/AgentGuard] [ main]
-(bash)> python3 main.py -h
+
+#### Windows
+```powershell
+$ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   # May be required to execute the installation script
+$ .\install.ps1
+```
+
+### Usage
+Help:
+```bash
+$ python3 main.py -h
 usage: main.py [-h] -p PATH -a AGENT_ROOT
 
 File watching and static analysis script.
@@ -18,10 +32,9 @@ options:
                         Path to the agent root.
 ```
 
-Example:
-```
-(venv) [lkotlus@m1n1m3] [.../CYSE/587/AgentGuard] [ main]
-(norm)> python3 main.py -a $cyse/587/adop-cyse/testbed-repo/ -p $cyse/587/adop-cyse/corpus/
+So, if you're running the ADOP testbed, you just need to provide the path to the agent's sandbox directory (`adop-cyse/testbed-repo/`) and the path to the ADOP log corpus (`adop-cyse/corpus/`). For example:
+```bash
+$ python3 main.py -a $cyse/587/adop-cyse/testbed-repo/ -p $cyse/587/adop-cyse/corpus/
 
     _                    _    ____                     _
    / \   __ _  ___ _ __ | |_ / ___|_   _  __ _ _ __ __| |

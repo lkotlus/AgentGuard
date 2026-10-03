@@ -3,8 +3,6 @@ set -euo pipefail
 
 for pyname in python3 python py; do
     if command -v "$pyname" >/dev/null 2>&1; then
-        path="$(command -v "$pyname")"
-        version="$("$pyname" --version 2>&1)"
         break
     fi
 done

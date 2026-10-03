@@ -14,9 +14,6 @@ if (-not $PyName) {
     exit 1
 }
 
-$path = (Get-Command $PyName).Source
-$version = & $PyName --version 2>&1
-
 if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
     $confirm = Read-Host "Ollama not found. Install it now? [y/N]"
     if ($confirm -match '^[Yy]$') {
