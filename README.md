@@ -19,7 +19,7 @@ $ .\install.ps1
 
 ### Usage
 Help:
-```bash
+```
 $ python3 main.py -h
 usage: main.py [-h] -p PATH -a AGENT_ROOT
 
@@ -33,7 +33,7 @@ options:
 ```
 
 So, if you're running the ADOP testbed, you just need to provide the path to the agent's sandbox directory (`adop-cyse/testbed-repo/`) and the path to the ADOP log corpus (`adop-cyse/corpus/`). For example:
-```bash
+```
 $ python3 main.py -a $cyse/587/adop-cyse/testbed-repo/ -p $cyse/587/adop-cyse/corpus/
 
     _                    _    ____                     _
