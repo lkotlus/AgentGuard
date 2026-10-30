@@ -28,7 +28,14 @@ class LogLine:
     task_id: str
     session_id: str
     scenario_tag: str
-    annotations: str
+    annotations: list[str]
+
+    @classmethod
+    def from_dict(cls, line: dict) -> "LogLine":
+        c = cls(**{f: getattr(line, f) for f in cls.__dataclass_fields__})
+        c.result_status = Status[line["result_status"]]
+        c.timestamp = datetime.fromisoformat(line["timestamp"])
+        return c
 
 
 @dataclass(frozen=True)

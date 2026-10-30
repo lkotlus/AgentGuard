@@ -10,6 +10,7 @@ The valid lines are analyzed before being sent to the agent.
 import json
 import logging
 import hashlib
+import os
 from pathlib import Path
 from watchdog.events import FileModifiedEvent, LoggingEventHandler
 
@@ -25,35 +26,27 @@ class AGEventHandler(LoggingEventHandler):
 
         super().__init__()
 
-    def read_file(self, fpath: bytes | str) -> list[LogLine]:
-        """Returns a list of all valid lines."""
+def read_file(self, fpath: bytes | str) -> list[LogLine]:
+    """Returns a list of all new valid lines"""
+    with open(fpath, "r", encoding="utf-8") as f:
+        contents = f.read()
 
-        with open(fpath, "r") as f:
-            contents = f.read()
+    prior = self.fcontents.setdefault(fpath, "")
+    if not contents.startswith(prior):
+        logging.critical(f"FILE CONTENTS OF {fpath} ILLEGALLY MODIFIED!")
+        os._exit(1)
 
-        if not fpath in self.fcontents:
-            self.fcontents[fpath] = {"hash": "", "text": ""}
-        else:
-            prior_contents = contents[:len(self.fcontents[fpath]["text"])].encode('utf-8')
-            if self.fcontents[fpath]["hash"] != hashlib.sha256(prior_contents).hexdigest():
-                logging.warning(f"FILE CONTENTS OF {fpath} ILLEGALLY MODIFIED!")
-                exit(-1)
-
-        parsed_lines = []
-        lines = contents[len(self.fcontents[fpath]["text"]):].split('\n')
-        for line in lines:
-            if not line:
-                continue
+    parsed_lines = []
+    for line in contents[len(prior):].split("\n")[:-1]:  # drop trailing unterminated line
+        if line:
             try:
                 parsed_lines.append(LogLine(**json.loads(line)))
-                self.fcontents[fpath]["text"] += line + '\n'
             except json.JSONDecodeError:
-                logging.warning("Incomplete or malformed jsonl.")
-                return parsed_lines
+                logging.warning(f"Malformed jsonl in {fpath}, stopping.")
+                break
+        self.fcontents[fpath] += line + "\n"
 
-        self.fcontents["hash"] = hashlib.sha256(self.fcontents["text"]).hexdigest()
-        
-        return parsed_lines
+    return parsed_lines
 
     def extract_paths(self, fline: LogLine) -> list[str]:
         """Returns a list of all paths in the arguments field"""
