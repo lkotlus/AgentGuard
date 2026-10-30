@@ -70,6 +70,7 @@ class AgentView:
 class Confidences:
     tool_risk: float = 0.0
     path_traversal: float = 0.0
+    argument_injection: float = 0.0
 
     @property
     def overall(self) -> float:
@@ -82,6 +83,7 @@ class Confidences:
             product *= (1 - float(getattr(self, field.name)))
 
         return 1 - product
+
 
 TOOL_RISK: dict[tuple[str, str], float] = {
     ("git", "git_commit"): 0.3,

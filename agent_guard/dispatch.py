@@ -31,7 +31,8 @@ def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None
     """Dispatches to agent."""
     confidences = Confidences(
         tool_risk=tool_risk(log.server, log.tool_name),
-        path_traversal=validate_path(server_cwd, allowed_path, log)
+        path_traversal=validate_path(server_cwd, allowed_path, log),
+        argument_injection=argument_injection(log),
     )
     agent_log = AgentView.from_log_line(log)
 
@@ -90,7 +91,7 @@ def validate_path(server_cwd: Path, allowed_path: Path, fline: LogLine) -> float
     return 0.0
 
 
-def diff_output_injection(fline: LogLine) -> float:
+def argument_injection(fline: LogLine) -> float:
     """Signature for CVE-2025-68144"""
     if (fline.server, fline.tool_name) != GIT_DIFF:
         return 0.0
