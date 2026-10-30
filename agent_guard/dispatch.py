@@ -9,7 +9,9 @@ from pathlib import Path
 from agent_guard.models import LogLine, AgentView, Confidences
 from agent_guard.registry import registry
 
+
 PATH_ARGS = ["target_path", "path"]
+
 
 def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None:
     """Dispatches to agent."""
@@ -22,11 +24,13 @@ def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None
         print(f"Anomalous log (high signature match, seq {log.seq}):\n\t{log}\n\t{confidences}\n")
     else:
         registry.dispatch(log, agent_log, confidences)
+
     
 def extract_paths(server_cwd: Path, allowed_path: Path, fline: LogLine) -> list[tuple[str, Path]]:
     """Returns (path, base the server resolves it against) pairs."""
     base = server_cwd if fline.tool_name == "git_init" else allowed_path
     return [(str(fline.arguments[a]), base) for a in PATH_ARGS if a in fline.arguments]
+
 
 def validate_path(server_cwd: Path, allowed_path: Path, fline: LogLine) -> float:
     """Binary check for path traversal attempts."""

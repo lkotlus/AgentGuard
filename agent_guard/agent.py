@@ -4,6 +4,7 @@ logs, evaluating the incoming findings and making informed
 decisions based off of all present data.
 """
 
+import asyncio
 import json
 import ollama
 from dataclasses import dataclass, asdict
@@ -54,32 +55,34 @@ class AgentSession:
         self.model = model
         self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         self._client = ollama.AsyncClient()
+        self._lock = asyncio.Lock()
 
     async def evaluate(self, agent_log: AgentView, confidences: Confidences) -> Verdict:
-        finding_payload = {
-            "call": asdict(agent_log),
-            "deterministic_confidences": asdict(confidences)
-        }
-        self.messages.append({
-            "role": "user",
-            "content": f"FINDING\n{json.dumps(finding_payload, default=str)}"
-        })
+        async with self._lock:
+            finding_payload = {
+                "call": asdict(agent_log),
+                "deterministic_confidences": asdict(confidences)
+            }
+            self.messages.append({
+                "role": "user",
+                "content": f"FINDING\n{json.dumps(finding_payload, default=str)}"
+            })
 
-        response = await self._client.chat(
-            model=self.model,
-            messages=self.messages,
-            tools=[VERDICT_TOOL]
-        )
-        msg = response["message"]
-        self.messages.append(msg)
+            response = await self._client.chat(
+                model=self.model,
+                messages=self.messages,
+                tools=[VERDICT_TOOL]
+            )
+            msg = response["message"]
+            self.messages.append(msg)
 
-        tool_calls = msg.get("tool_calls") or []
-        if not tool_calls:
-            # Report if the clanker just narrated stuff
-            raise RuntimeError(f"Agent didn't call submit_verdict: {msg.get('content')!r}")
+            tool_calls = msg.get("tool_calls") or []
+            if not tool_calls:
+                # Report if the clanker just narrated stuff
+                raise RuntimeError(f"Agent didn't call submit_verdict: {msg.get('content')!r}")
 
-        args = tool_calls[0]["function"]["arguments"]
-        if isinstance(args, str):
-            args = json.loads(args)
+            args = tool_calls[0]["function"]["arguments"]
+            if isinstance(args, str):
+                args = json.loads(args)
 
-        return Verdict(alert=args["alert"], reasoning=args["reasoning"])
+            return Verdict(alert=args["alert"], reasoning=args["reasoning"])

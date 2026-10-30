@@ -1,10 +1,5 @@
 """
 AgentGuard Event Handler
-
-Upon an update to any file within a given corpus directory,
-the event handler will get the additions to the file. It then
-determines which portion(s) of the additon(s) is/are valid jsonl.
-The valid lines are analyzed before being sent to the agent.
 """
 
 import os
