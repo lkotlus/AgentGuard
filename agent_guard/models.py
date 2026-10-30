@@ -5,6 +5,7 @@ Datclasses, enums, and whatnot.
 from datetime import datetime
 from dataclasses import dataclass, fields
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 
@@ -12,6 +13,14 @@ class Status(Enum):
     ERROR   = "error"
     SUCCESS = "success"
     BLOCKED = "blocked"
+
+
+@dataclass
+class TrackedFile:
+    mirror: Path
+    offset: int = 0
+    tail_start: int = 0
+    tail: bytes = b""
 
 
 @dataclass
