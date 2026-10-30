@@ -9,6 +9,7 @@ The valid lines are analyzed before being sent to the agent.
 
 import json
 import logging
+import hashlib
 from pathlib import Path
 from watchdog.events import FileModifiedEvent, LoggingEventHandler
 
@@ -31,23 +32,26 @@ class AGEventHandler(LoggingEventHandler):
             contents = f.read()
 
         if not fpath in self.fcontents:
-            self.fcontents[fpath] = ""
-
-        # In case of reset_testbed
-        if len(contents) < len(self.fcontents[fpath]):
-            self.fcontents[fpath] = ""
+            self.fcontents[fpath] = {"hash": "", "text": ""}
+        else:
+            prior_contents = contents[:len(self.fcontents[fpath]["text"])].encode('utf-8')
+            if self.fcontents[fpath]["hash"] != hashlib.sha256(prior_contents).hexdigest():
+                logging.warning(f"FILE CONTENTS OF {fpath} ILLEGALLY MODIFIED!")
+                exit(-1)
 
         parsed_lines = []
-        lines = contents[len(self.fcontents[fpath]):].split('\n')
+        lines = contents[len(self.fcontents[fpath]["text"]):].split('\n')
         for line in lines:
             if not line:
                 continue
             try:
                 parsed_lines.append(LogLine(**json.loads(line)))
-                self.fcontents[fpath] += line + '\n'
+                self.fcontents[fpath]["text"] += line + '\n'
             except json.JSONDecodeError:
                 logging.warning("Incomplete or malformed jsonl.")
                 return parsed_lines
+
+        self.fcontents["hash"] = hashlib.sha256(self.fcontents["text"]).hexdigest()
         
         return parsed_lines
 
