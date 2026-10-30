@@ -68,6 +68,7 @@ class AgentView:
 
 @dataclass(frozen=True)
 class Confidences:
+    tool_risk: float = 0.0
     path_traversal: float = 0.0
 
     @property
@@ -81,3 +82,21 @@ class Confidences:
             product *= (1 - float(getattr(self, field.name)))
 
         return 1 - product
+
+TOOL_RISK: dict[tuple[str, str], float] = {
+    ("git", "git_commit"): 0.3,
+    ("filesystem", "write_file"): 0.3,
+    ("memory", "memory_set"): 0.3,
+    ("fetch", "fetch"): 0.2,
+    ("git", "git_add"): 0.2,
+    ("git", "git_init"): 0.2,
+}
+LOW_RISK_TOOLS = {
+    ("filesystem", "read_text_file"), ("filesystem", "list_directory"),
+    ("filesystem", "search_files"), ("filesystem", "get_file_info"),
+    ("git", "git_status"), ("git", "git_log"), ("git", "git_branch"),
+    ("git", "git_diff"), ("git", "git_show_worktree"), ("memory", "memory_get"),
+    ("memory", "memory_list"), ("fetch", "list_available_pages")
+}
+LOW_RISK = 0.05
+UNKNOWN_TOOL_RISK = 0.3
