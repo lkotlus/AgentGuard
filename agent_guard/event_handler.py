@@ -26,27 +26,27 @@ class AGEventHandler(LoggingEventHandler):
 
         super().__init__()
 
-def read_file(self, fpath: bytes | str) -> list[LogLine]:
-    """Returns a list of all new valid lines"""
-    with open(fpath, "r", encoding="utf-8") as f:
-        contents = f.read()
+    def read_file(self, fpath: bytes | str) -> list[LogLine]:
+        """Returns a list of all new valid lines"""
+        with open(fpath, "r", encoding="utf-8") as f:
+            contents = f.read()
 
-    prior = self.fcontents.setdefault(fpath, "")
-    if not contents.startswith(prior):
-        logging.critical(f"FILE CONTENTS OF {fpath} ILLEGALLY MODIFIED!")
-        os._exit(1)
+        prior = self.fcontents.setdefault(fpath, "")
+        if not contents.startswith(prior):
+            logging.critical(f"FILE CONTENTS OF {fpath} ILLEGALLY MODIFIED!")
+            os._exit(1)
 
-    parsed_lines = []
-    for line in contents[len(prior):].split("\n")[:-1]:  # drop trailing unterminated line
-        if line:
-            try:
-                parsed_lines.append(LogLine(**json.loads(line)))
-            except json.JSONDecodeError:
-                logging.warning(f"Malformed jsonl in {fpath}, stopping.")
-                break
-        self.fcontents[fpath] += line + "\n"
+        parsed_lines = []
+        for line in contents[len(prior):].split("\n")[:-1]:  # drop trailing unterminated line
+            if line:
+                try:
+                    parsed_lines.append(LogLine.from_dict(json.loads(line)))
+                except json.JSONDecodeError:
+                    logging.warning(f"Malformed jsonl in {fpath}, stopping.")
+                    break
+            self.fcontents[fpath] += line + "\n"
 
-    return parsed_lines
+        return parsed_lines
 
     def extract_paths(self, fline: LogLine) -> list[str]:
         """Returns a list of all paths in the arguments field"""
@@ -72,6 +72,7 @@ def read_file(self, fpath: bytes | str) -> list[LogLine]:
 
     def on_modified(self, event):
         """Main handler code"""
+        print("UPDATE DETECTED!")
 
         if type(event) is not FileModifiedEvent:
             return
