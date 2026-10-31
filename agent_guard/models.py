@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any
 
 
+#
+# Log tracking
+#
+
 class Status(Enum):
     ERROR   = "error"
     SUCCESS = "success"
@@ -65,6 +69,9 @@ class AgentView:
     def from_log_line(cls, line: LogLine) -> "AgentView":
         return cls(**{f: getattr(line, f) for f in cls.__dataclass_fields__})
 
+#
+# Scoring
+#
 
 @dataclass(frozen=True)
 class Confidences:
@@ -102,3 +109,17 @@ LOW_RISK_TOOLS = {
 }
 LOW_RISK = 0.05
 UNKNOWN_TOOL_RISK = 0.3
+
+
+#
+# RAG
+#
+
+@dataclass(frozen=True)
+class Finding:
+    seq: int
+    source: str
+    label: str
+    detail: str
+
+
