@@ -93,6 +93,10 @@ class Confidences:
 
         return 1 - product
 
+    def signatures(self) -> list[str]:
+        """Names of the signature checks (required for the clanker)"""
+        return [f.name for f in fields(self) if f.name != "tool_risk" and getattr(self, f.name) >= 0.5]
+
 
 TOOL_RISK: dict[tuple[str, str], float] = {
     ("git", "git_commit"): 0.3,
@@ -124,5 +128,3 @@ class Finding:
     source: str
     label: str
     detail: str
-
-
