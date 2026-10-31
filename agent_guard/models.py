@@ -6,7 +6,7 @@ from datetime import datetime
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 #
@@ -127,3 +127,56 @@ class Finding:
     source: str
     label: str
     detail: str
+
+
+#
+# Reporting
+#
+
+Decision = Literal["suppressed", "reviewing", "cleared", "alert", "error"]
+
+
+class Level(Enum):
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
+@dataclass
+class Event:
+    kind: Literal["call", "integrity", "system"]
+    time: str
+    level: Level = Level.INFO
+    session_id: str | None = None
+    seq: int | None = None
+    tool: str | None = None
+    target: str | None = None
+    decision: Decision | None = None
+    source: str | None = None   # signature or analyst
+    score: float | None = None
+    label: str | None = None    # signature names or analyst category
+    evidence: list[int] = field(default_factory=list)
+    reasoning: str | None = None
+    message: str | None = None
+
+
+@dataclass
+class Row:
+    seq: int
+    tool: str
+    target: str
+    score: float
+    decision: Decision
+    source: str | None = None
+    label: str | None = None
+    evidence: list[int] = field(default_factory=list)
+    reasoning: str | None = None
+    linked_by: set[int] = field(default_factory=set)
+
+
+@dataclass
+class Snapshot:
+    sessions: dict[str, dict[int, Row]]
+    order: list[str]    # session ids in decending order of recency
+    integrity: list[Event]
+    notices: list[Event]

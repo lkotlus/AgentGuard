@@ -11,6 +11,7 @@ from pathlib import Path
 from agent_guard.agent.agent import DEFAULT_MODEL, AgentSession, Decision
 from agent_guard.agent.history import HistoryStore
 from agent_guard.models import AgentView, Confidences, LogLine
+from agent_guard.reporting import reporter
 
 
 class SessionRegistry:
@@ -39,27 +40,26 @@ class SessionRegistry:
         """Synchronous entry point :)"""
         session = self._get_or_create(view.session_id)
         future = asyncio.run_coroutine_threadsafe(session.ingest(view, confidences, decision), self._loop)
-        future.add_done_callback(partial(self._handle_result, log, decision))  # type: ignore
+        future.add_done_callback(partial(self._handle_result, log, decision, confidences.overall))  # type: ignore
 
-    def _handle_result(self, log: LogLine, decision: Decision, future) -> None:
+    def _handle_result(self, log: LogLine, decision: Decision, score: float, future) -> None:
         try:
             verdict = future.result()
         except Exception as e:
             if decision == "review":
                 # Fail secure (if the analyst can't judge it, we treat it as hostile)
-                print(f"Anomalous log (analyst evaluation failed, seq {log.seq}):\n\t{log}\n\t{e}\n")
+                reporter.call(log, "error", score, source="analyst", reasoning=str(e))
             else:
-                logging.error(f"Failed to record seq {log.seq} in session history: {e}")
+                reporter.system("warning", f"Failed to record seq {log.seq} of {log.session_id} in history: {e}")
             return
 
         if verdict is None:
             return
         if verdict.alert:
-            linked = [s for s in verdict.evidence_seqs if s != log.seq]
-            also = f"\n\tAlso implicates seq {', '.join(map(str, linked))}" if linked else ""
-            print(f"Anomalous log (analyst: {verdict.category}, seq {log.seq}):\n\t{log}\n\t{verdict.reasoning}{also}\n")
+            reporter.call(log, "alert", score, source="analyst", label=verdict.category,
+                          evidence=verdict.evidence_seqs, reasoning=verdict.reasoning)
         else:
-            print(f"Analyst cleared seq {log.seq}:\n\t{verdict.reasoning}\n")
+            reporter.call(log, "cleared", score, source="analyst", reasoning=verdict.reasoning)
 
 
 registry = SessionRegistry()

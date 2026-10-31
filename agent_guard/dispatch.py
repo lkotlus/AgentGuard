@@ -17,6 +17,7 @@ from agent_guard.models import (
     Confidences
 )
 from agent_guard.registry import registry
+from agent_guard.reporting import reporter
 
 
 PATH_ARGS = ["target_path", "path"]
@@ -35,18 +36,20 @@ def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None
         argument_injection=argument_injection(log),
     )
     view = AgentView.from_log_line(log)
+    score = confidences.overall
 
-    if confidences.overall > ALERT_THRESH:
+    if score > ALERT_THRESH:
         decision = "alert"
-        print(f"Anomalous log (high signature match, seq {log.seq}):\n\t{log}\n\t{confidences}\n")
-    elif confidences.overall >= REVIEW_THRESH:
+        reporter.call(log, "alert", score, source="signature",
+                      label=", ".join(confidences.signatures()) or "combined score", evidence=[log.seq])
+    elif score >= REVIEW_THRESH:
         decision = "review"
+        reporter.call(log, "reviewing", score)
     else:
         decision = "suppress"
-        print(f"Suppressed log seq {log.seq} from {log.session_id} (confidence below {REVIEW_THRESH*100:.0f}%)")
+        reporter.call(log, "suppressed", score)
 
     registry.submit(log, view, confidences, decision)
-
 
 #
 # RISK CALCULATION HELPERS

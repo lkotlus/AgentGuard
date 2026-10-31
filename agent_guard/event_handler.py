@@ -17,6 +17,7 @@ from watchdog.events import (
 
 from agent_guard.models import LogLine, TrackedFile
 from agent_guard.dispatch import dispatch_finding
+from agent_guard.reporting import reporter
 
 LOG_SUFFIX = ".jsonl"
 CHUNK = 1 << 16
@@ -90,10 +91,7 @@ class AGEventHandler(FileSystemEventHandler):
 
     @staticmethod
     def _report_tampering(fpath: Path, st: TrackedFile, how: str) -> None:
-        logging.critical(
-            f"LOG TAMPERING: {fpath} {how}. Last verified copy: {st.mirror}. "
-            f"Stop the agent and review the session."
-        )
+        reporter.integrity(fpath, f"{how}; last verified copy: {st.mirror}. Stop the agent and review the session.")
 
     def read_file(self, fpath: Path) -> list[LogLine]:
         """Mirrors and returns all new complete lines."""
@@ -159,11 +157,7 @@ class AGEventHandler(FileSystemEventHandler):
             return
 
         for fline in flines:
-            print(f"Received a new log from {fline.session_id} (seq {fline.seq})\n")
-            try:
-                dispatch_finding(self.server_cwd, self.allowed_path, fline)
-            except Exception:
-                logging.exception(f"Anomalous log (scoring failed, seq {fline.seq}):\n\t{fline}")
+            dispatch_finding(self.server_cwd, self.allowed_path, fline)
 
     def on_created(self, event):
         if isinstance(event, FileCreatedEvent) and self._is_log(str(event.src_path)):
