@@ -3,11 +3,25 @@ Session registry! We need to map session IDs to agents.
 """
 
 import asyncio
+import json
+import logging
 import threading
 from functools import partial
+from pathlib import Path
 
-from agent_guard.models import LogLine, AgentView, Confidences
-from agent_guard.agent import AgentSession
+from agent_guard.agent import DEFAULT_MODEL, AgentSession, Decision
+from agent_guard.history import HistoryStore
+from agent_guard.models import AgentView, Confidences, LogLine
+
+
+def load_task_instructions(paths: list[str]) -> dict[str, str]:
+    """Maps task id to instruction from task JSON files."""
+    tasks: dict[str, str] = {}
+    for p in paths:
+        for t in json.loads(Path(p).read_text(encoding="utf-8")):
+            tasks[t["id"]] = t["instruction"]
+    return tasks
+
 
 class SessionRegistry:
     def __init__(self):
@@ -16,36 +30,48 @@ class SessionRegistry:
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._loop.run_forever, daemon=True)
         self._thread.start()
+        self._store: HistoryStore | None = None
+        self._tasks: dict[str, str] = {}
+        self._model = DEFAULT_MODEL
+
+    def configure(self, db_path: Path, tasks: dict[str, str], model: str = DEFAULT_MODEL) -> None:
+        self._store = HistoryStore(db_path)
+        self._tasks = tasks
+        self._model = model
 
     def _get_or_create(self, session_id: str) -> AgentSession:
+        if self._store is None:
+            raise RuntimeError("registry.configure() must be called before logs are dispatched.")
         with self._lock:
             if session_id not in self._sessions:
-                self._sessions[session_id] = AgentSession(session_id)
+                self._sessions[session_id] = AgentSession(session_id, self._store, self._tasks, self._model)
             return self._sessions[session_id]
 
-    def _handle_result(self, log: LogLine, future: asyncio.Future) -> None:
+    def submit(self, log: LogLine, view: AgentView, confidences: Confidences, decision: Decision) -> None:
+        """Synchronous entry point :)"""
+        session = self._get_or_create(view.session_id)
+        future = asyncio.run_coroutine_threadsafe(session.ingest(view, confidences, decision), self._loop)
+        future.add_done_callback(partial(self._handle_result, log, decision))  # type: ignore
+
+    def _handle_result(self, log: LogLine, decision: Decision, future) -> None:
         try:
             verdict = future.result()
         except Exception as e:
-            print(f"Agent evalutation failed (seq {log.seq}):\n\t{log}\n\t{e}\n")
+            if decision == "review":
+                # Fail secure (if the analyst can't judge it, we treat it as hostile)
+                print(f"Anomalous log (analyst evaluation failed, seq {log.seq}):\n\t{log}\n\t{e}\n")
+            else:
+                logging.error(f"Failed to record seq {log.seq} in session history: {e}")
             return
 
+        if verdict is None:
+            return
         if verdict.alert:
-            print(f"Anomalous log (agent detected, seq {log.seq}):\n\t{log}\n\t{verdict.reasoning}\n")
+            linked = [s for s in verdict.evidence_seqs if s != log.seq]
+            also = f"\n\tAlso implicates seq {', '.join(map(str, linked))}" if linked else ""
+            print(f"Anomalous log (analyst: {verdict.category}, seq {log.seq}):\n\t{log}\n\t{verdict.reasoning}{also}\n")
         else:
-            print(f"Agent suppressed (seq {log.seq}):\n\t{verdict.reasoning}\n")
+            print(f"Analyst cleared seq {log.seq}:\n\t{verdict.reasoning}\n")
 
-    def dispatch(
-        self,
-        log: LogLine,
-        agent_log: AgentView,
-        confidences: Confidences
-    ) -> None:
-        """Synchronous entry point :)"""
-        session = self._get_or_create(agent_log.session_id)
-        future = asyncio.run_coroutine_threadsafe(
-            session.evaluate(agent_log, confidences), self._loop
-        )
-        future.add_done_callback(partial(self._handle_result, log)) #type: ignore
 
 registry = SessionRegistry()
