@@ -9,19 +9,21 @@ SQLite I love SQLite I love SQLite ...)
 """
 
 import json
-import logging
 import math
 import re
 import sqlite3
 from array import array
-from dataclasses import asdict, dataclass
+from collections.abc import Iterator
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
+import httpx
 import ollama
 
-from agent_guard.models import AgentView, Status, Finding
+from agent_guard.models import AgentView, Finding, Status
+from agent_guard.reporting import reporter
 
 EMBED_MODEL = "nomic-embed-text"
 TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_./:-]{3,}")
@@ -134,8 +136,8 @@ class HistoryStore:
         try:
             resp = await self._client.embed(model=self.embed_model, input=text)
             return list(resp.embeddings[0])
-        except Exception as e:
-            logging.warning(f"Embeddings unavailable, falling back to structural retrieval.")
+        except (ollama.ResponseError, ollama.RequestError, ConnectionError, httpx.TransportError):
+            reporter.warning("Embeddings ({type(e).__name__}) unavailable, falling back to structural retrieval.")
             self._embed_ok = False
             return None
 

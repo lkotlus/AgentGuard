@@ -3,15 +3,21 @@ Session registry! We need to map session IDs to agents.
 """
 
 import asyncio
-import logging
+import concurrent.futures
+import sqlite3
 import threading
 from functools import partial
 from pathlib import Path
 
-from agent_guard.agent.agent import DEFAULT_MODEL, AgentSession, Decision
+import httpx
+import ollama
+
+from agent_guard.agent.agent import DEFAULT_MODEL, AgentSession, AnalystError, Decision
 from agent_guard.agent.history import HistoryStore
 from agent_guard.models import AgentView, Confidences, LogLine
 from agent_guard.reporting import reporter
+
+MODEL_ERRORS = (AnalystError, ollama.ResponseError, ConnectionError, httpx.TransportError)
 
 
 class SessionRegistry:
@@ -45,12 +51,14 @@ class SessionRegistry:
     def _handle_result(self, log: LogLine, decision: Decision, score: float, future) -> None:
         try:
             verdict = future.result()
-        except Exception as e:
-            if decision == "review":
-                # Fail secure (if the analyst can't judge it, we treat it as hostile)
-                reporter.call(log, "error", score, source="analyst", reasoning=str(e))
-            else:
-                reporter.system("warning", f"Failed to record seq {log.seq} of {log.session_id} in history: {e}")
+        except concurrent.futures.CancelledError:
+            self._unjudged(log, decision, score, "processing was cancelled (AgentGuard shutting down)")
+            return
+        except MODEL_ERRORS as e:
+            self._unjudged(log, decision, score, f"analyst unavailable: {type(e).__name__}: {e}")
+            return
+        except sqlite3.Error as e:
+            self._unjudged(log, decision, score, f"session history unavailable: {e}")
             return
 
         if verdict is None:
@@ -60,6 +68,13 @@ class SessionRegistry:
                           evidence=verdict.evidence_seqs, reasoning=verdict.reasoning)
         else:
             reporter.call(log, "cleared", score, source="analyst", reasoning=verdict.reasoning)
+
+    @staticmethod
+    def _unjudged(log: LogLine, decision: Decision, score: float, why: str) -> None:
+        if decision == "review":
+            reporter.call(log, "error", score, source="analyst", reasoning=why)
+        else:
+            reporter.warning(f"seq {log.seq} of {log.session_id} not recorded in history: {why}")
 
 
 registry = SessionRegistry()

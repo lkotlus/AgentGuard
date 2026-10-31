@@ -12,13 +12,12 @@ from agent_guard.models import (
     LOW_RISK_TOOLS,
     TOOL_RISK,
     UNKNOWN_TOOL_RISK,
-    LogLine,
     AgentView,
-    Confidences
+    Confidences,
+    LogLine,
 )
 from agent_guard.registry import registry
 from agent_guard.reporting import reporter
-
 
 PATH_ARGS = ["target_path", "path"]
 GIT_DIFF = ("git", "git_diff")

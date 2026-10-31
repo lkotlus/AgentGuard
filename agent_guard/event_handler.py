@@ -2,21 +2,20 @@
 AgentGuard Event Handler
 """
 
-import os
 import json
-import logging
-from dataclasses import dataclass
+import os
 from pathlib import Path
+
 from watchdog.events import (
-    FileSystemEventHandler,
     FileCreatedEvent,
+    FileDeletedEvent,
     FileModifiedEvent,
     FileMovedEvent,
-    FileDeletedEvent,
+    FileSystemEventHandler,
 )
 
-from agent_guard.models import LogLine, TrackedFile
 from agent_guard.dispatch import dispatch_finding
+from agent_guard.models import LogLine, TrackedFile
 from agent_guard.reporting import reporter
 
 LOG_SUFFIX = ".jsonl"
@@ -120,7 +119,10 @@ class AGEventHandler(FileSystemEventHandler):
                     try:
                         parsed.append(LogLine.from_dict(json.loads(line)))
                     except NONCONFORMING as e:
-                        logging.warning(f"Non-conforming line in {fpath} at byte {st.offset}: {e}")
+                        reporter.warning(
+                            f"Non-conforming line in {fpath} at byte {st.offset}: {e} "
+                            f"(starts {line[:60]!r})"
+                        )
                 st.offset += len(raw)
             m.flush()
             os.fsync(m.fileno())

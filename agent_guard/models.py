@@ -2,12 +2,11 @@
 Datclasses, enums, and whatnot.
 """
 
-from datetime import datetime
 from dataclasses import dataclass, field, fields
+from datetime import datetime
 from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, Literal
-
 
 #
 # Log tracking
@@ -83,12 +82,12 @@ class Confidences:
     @property
     def overall(self) -> float:
         product = 1.0
-        for field in fields(self):
-            v = getattr(self, field.name)
+        for clsfield in fields(self):
+            v = getattr(self, clsfield.name)
             if not (0.0 <= v <= 1.0):
-                raise ValueError(f"{field.name} must be in [0,1], got {v}")
+                raise ValueError(f"{clsfield.name} must be in [0,1], got {v}")
 
-            product *= (1 - float(getattr(self, field.name)))
+            product *= (1 - float(getattr(self, clsfield.name)))
 
         return 1 - product
 
@@ -158,6 +157,7 @@ class Event:
     evidence: list[int] = field(default_factory=list)
     reasoning: str | None = None
     message: str | None = None
+    traceback: str | None = None # used for internal errors
 
 
 @dataclass

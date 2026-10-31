@@ -1,15 +1,15 @@
+import argparse
+import logging
 import sys
 import time
-import logging
-import argparse
 from pathlib import Path
+
 from watchdog.observers import Observer
 
 from agent_guard.agent.agent import DEFAULT_MODEL
 from agent_guard.event_handler import AGEventHandler
 from agent_guard.registry import registry
-from agent_guard.reporting import reporter, LiveView, PlainView, ReporterLogHandler
-
+from agent_guard.reporting import LibraryLogHandler, LiveView, PlainView, reporter
 
 MIN_VERSION = (3, 11) # This means 3.11
 BANNER = r"""
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     if plain:
         print_banner(args.path, args.agent_root)
 
-    logging.basicConfig(level=logging.WARNING, handlers=[ReporterLogHandler()], force=True)
+    logging.basicConfig(level=logging.WARNING, handlers=[LibraryLogHandler()], force=True)
 
     event_handler = AGEventHandler(args.agent_root, args.path, args.mirror_root, args.server_cwd)
     registry.configure(mirror_root / "history.sqlite3", model=args.model)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             while observer.is_alive():
                 time.sleep(1)
             # I am HILARIOUS put me on marketing stat
-            reporter.system("critical", "File observer stopped. No longer AgentGuarding.")
+            reporter.critical("File observer stopped. No longer AgentGuarding.")
         except KeyboardInterrupt:
             pass
         finally:

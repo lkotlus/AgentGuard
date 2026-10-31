@@ -95,7 +95,7 @@ class AgentSession:
                     {"role": "assistant", "content": content},
                     {"role": "user", "content": f"That response was invalid ({e.error_count()} errors). Reply again with JSON matching the schema."},
                 ]
-        raise RuntimeError(f"No valid verdict after {MAX_ATTEMPTS} attempts: {error}")
+        raise AnalystError(f"No valid verdict after {MAX_ATTEMPTS} attempts: {error}")
 
     def _validate(self, verdict: Verdict, view: AgentView) -> Verdict:
         """Drop hallucinated evidence (I hate LLMs I hate LLMs I hate LLMs)"""
@@ -113,3 +113,6 @@ class AgentSession:
                 self.store.add_finding(self.session_id, Finding(
                     s, "analyst-linked", label, f"implicated by the review of seq {view.seq}"
                 ))
+
+class AnalystError(Exception):
+    """The analyst was reached but couldn't produce anything."""

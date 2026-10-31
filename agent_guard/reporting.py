@@ -13,11 +13,11 @@ import copy
 import json
 import logging
 import threading
+import traceback as tb
 from collections import deque
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
 from rich import box
 from rich.console import Console, Group
@@ -27,7 +27,8 @@ from rich.table import Table
 from rich.text import Text
 
 from agent_guard.agent.prompts import CATEGORIES
-from agent_guard.models import LogLine, Decision, Level, Event, Row, Snapshot
+from agent_guard.models import Decision, Event, Level, LogLine, Row, Snapshot
+
 
 def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
@@ -69,6 +70,7 @@ class Reporter:
         self._tick = 0
         self._integrity: list[Event] = []
         self._notices: deque[Event] = deque(maxlen=3)
+        self._write_failed = False
 
     def configure(self, events_path: Path, view) -> None:
         self._path = events_path
@@ -90,8 +92,8 @@ class Reporter:
     def integrity(self, path, message: str) -> None:
         self._emit(Event(kind="integrity", time=_now(), level=Level.CRITICAL, target=str(path), message=message))
 
-    def system(self, level: str, message: str) -> None:
-        self._emit(Event(kind="system", time=_now(), level=Level(level), message=message))
+    def system(self, level: Level | str, message: str, traceback: str | None = None) -> None:
+        self._emit(Event(kind="system", time=_now(), level=Level(level), message=message, traceback=traceback))
 
     #
     # State (Dijkstra was so right)
@@ -99,12 +101,29 @@ class Reporter:
 
     def _emit(self, e: Event) -> None:
         with self._lock:
-            if self._path:
-                with open(self._path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
-            self._apply(e)
-            if self._view:
-                self._view.on_event(e)
+            failure = self._write(e)
+            for event in (e, failure) if failure else (e,):
+                self._apply(event)
+                if self._view:
+                    self._view.on_event(event)
+
+    def _write(self, e: Event) -> Event | None:
+        """Appends to the event log. A failure is returned as a notice instead of raised,
+        so the event is still displayed; it's reported once until writes recover."""
+        if not self._path:
+            return None
+        try:
+            with open(self._path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
+        except OSError as err:
+            if self._write_failed:
+                return None
+            self._write_failed = True
+            return Event(kind="system", time=_now(), level=Level.CRITICAL,
+                         message=f"Event log write failed ({err}). Events are still"
+                                 f"shown but not recorded to {self._path}.")
+        self._write_failed = False
+        return None
 
     def _apply(self, e: Event) -> None:
         if e.kind == "integrity":
@@ -137,17 +156,35 @@ class Reporter:
                 list(self._notices),
             )
 
+    #
+    # Convenience methods
+    #
+
+    def critical(self, message: str) -> None:
+        self.system(Level.CRITICAL, message)
+
+    def warning(self, message: str) -> None:
+        self.system(Level.WARNING, message)
+
+    def info(self, message: str) -> None:
+        self.system(Level.INFO, message)
+
 
 reporter = Reporter()
 
 
-class ReporterLogHandler(logging.Handler):
-    """Routes all warnings to this even stream."""
+class LibraryLogHandler(logging.Handler):
+    """All reporting is done through the reporter."""
+
     def emit(self, record: logging.LogRecord) -> None:
+        level = Level.CRITICAL if record.levelno >= logging.ERROR else Level.WARNING
         try:
-            reporter.system("critical" if record.levelno >= logging.ERROR else "warning", record.getMessage())
-        except Exception:
+            message = record.getMessage()
+        except (TypeError, ValueError):
             self.handleError(record)
+            return
+        trace = "".join(tb.format_exception(*record.exc_info)) if record.exc_info else None
+        reporter.system(level, f"[{record.name}] {message}", traceback=trace)
 
 
 def incidents(rows: dict[int, Row]) -> list[list[int]]:
@@ -181,6 +218,8 @@ def incidents(rows: dict[int, Row]) -> list[list[int]]:
 
 class PlainView:
     """One line per event and fixed columns."""
+    def __init__(self):
+        self._closed = False
 
     def __enter__(self):
         return self
@@ -189,7 +228,12 @@ class PlainView:
         return False
 
     def on_event(self, e: Event) -> None:
-        print(self.format(e), flush=True)
+        if self._closed:
+            return
+        try:
+            print(self.format(e), flush=True)
+        except BrokenPipeError:
+            self._closed = True
 
     @staticmethod
     def format(e: Event) -> str:
