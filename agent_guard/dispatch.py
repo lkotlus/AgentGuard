@@ -28,21 +28,24 @@ REVIEW_THRESH = 0.1
 
 
 def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None:
-    """Dispatches to agent."""
+    """Scores a log and passes it to the registry."""
     confidences = Confidences(
         tool_risk=tool_risk(log.server, log.tool_name),
         path_traversal=validate_path(server_cwd, allowed_path, log),
         argument_injection=argument_injection(log),
     )
-    agent_log = AgentView.from_log_line(log)
+    view = AgentView.from_log_line(log)
 
-    if confidences.overall >= ALERT_THRESH:
+    if confidences.overall > ALERT_THRESH:
+        decision = "alert"
         print(f"Anomalous log (high signature match, seq {log.seq}):\n\t{log}\n\t{confidences}\n")
     elif confidences.overall >= REVIEW_THRESH:
-        registry.dispatch(log, agent_log, confidences)
+        decision = "review"
     else:
-        print(f"Suppressed log seq {log.seq} from {log.session_id} (confidence below {REVIEW_THRESH*100}%)")
+        decision = "suppress"
+        print(f"Suppressed log seq {log.seq} from {log.session_id} (confidence below {REVIEW_THRESH*100:.0f}%)")
 
+    registry.submit(log, view, confidences, decision)
 
 #
 # RISK CALCULATION HELPERS
