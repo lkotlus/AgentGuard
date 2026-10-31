@@ -160,7 +160,10 @@ class AGEventHandler(FileSystemEventHandler):
 
         for fline in flines:
             print(f"Received a new log from {fline.session_id} (seq {fline.seq})\n")
-            dispatch_finding(self.server_cwd, self.allowed_path, fline)
+            try:
+                dispatch_finding(self.server_cwd, self.allowed_path, fline)
+            except Exception:
+                logging.exception(f"Anomalous log (scoring failed, seq {fline.seq}):\n\t{fline}")
 
     def on_created(self, event):
         if isinstance(event, FileCreatedEvent) and self._is_log(str(event.src_path)):

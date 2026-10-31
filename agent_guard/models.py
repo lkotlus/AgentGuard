@@ -3,7 +3,7 @@ Datclasses, enums, and whatnot.
 """
 
 from datetime import datetime
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -37,7 +37,7 @@ class LogLine:
     task_id: str
     session_id: str
     scenario_tag: str
-    annotations: list[str]
+    annotations: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, line: dict) -> "LogLine":

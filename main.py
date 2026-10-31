@@ -59,8 +59,9 @@ if __name__ == "__main__":
     observer.start()
 
     try:
-        while True:
+        while observer.is_alive():
             time.sleep(1)
+        logging.critical("File observer died! AgentGuard is no longer monitoring.")
     except KeyboardInterrupt:
         observer.stop()
 

@@ -24,7 +24,7 @@ GIT_DIFF = ("git", "git_diff")
 OUTPUT_OPT = "--output"
 
 ALERT_THRESH = 0.8
-REVIEW_THRESH = 0.2
+REVIEW_THRESH = 0.1
 
 
 def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None:
@@ -36,9 +36,9 @@ def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None
     )
     agent_log = AgentView.from_log_line(log)
 
-    if confidences.overall > ALERT_THRESH:
+    if confidences.overall >= ALERT_THRESH:
         print(f"Anomalous log (high signature match, seq {log.seq}):\n\t{log}\n\t{confidences}\n")
-    elif confidences.overall > REVIEW_THRESH:
+    elif confidences.overall >= REVIEW_THRESH:
         registry.dispatch(log, agent_log, confidences)
     else:
         print(f"Suppressed log seq {log.seq} from {log.session_id} (confidence below {REVIEW_THRESH*100}%)")
@@ -86,10 +86,13 @@ def validate_path(server_cwd: Path, allowed_path: Path, fline: LogLine) -> float
     """Binary check for path traversal attempts.
     Works as a signature match for CVE-2025-68143"""
     for p, base in _extract_paths(server_cwd, allowed_path, fline):
-        if not (base / p).resolve().is_relative_to(allowed_path):
+        try:
+            resolved = (base / p).resolve()
+        except (OSError, ValueError):
+            return 1.0  # an unresolvable path argument (e.g. embedded NUL) is itself an attempt
+        if not resolved.is_relative_to(allowed_path):
             return 1.0
     return 0.0
-
 
 def argument_injection(fline: LogLine) -> float:
     """Signature for CVE-2025-68144"""
