@@ -26,6 +26,7 @@ $pyname -m venv venv
 venv/bin/$pyname -m pip install -r requirements.txt
 
 ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
 
 sleep 1; clear
 

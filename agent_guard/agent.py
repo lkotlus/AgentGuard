@@ -38,13 +38,11 @@ class AgentSession:
         self,
         session_id: str,
         store: HistoryStore,
-        tasks: dict[str, str],
         model: str = DEFAULT_MODEL,
         client=None,
     ):
         self.session_id = session_id
         self.store = store
-        self.tasks = tasks
         self.model = model
         self._client = client or ollama.AsyncClient()
         self._lock = asyncio.Lock()
@@ -75,9 +73,9 @@ class AgentSession:
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": build_review(
-                self.tasks.get(view.task_id), findings, recent, related, view, confidences
-            )},
+            {"role": "user", "content": 
+                build_review(findings, recent, related, view, confidences)
+            },
         ]
 
         error: Exception | None = None

@@ -5,6 +5,8 @@ from pathlib import Path
 from watchdog.observers import Observer
 
 from agent_guard.event_handler import AGEventHandler
+from agent_guard.agent import DEFAULT_MODEL
+from agent_guard.registry import registry
 
 
 BANNER = r"""
@@ -27,15 +29,16 @@ def print_banner(watch_path: Path, agent_root: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="File watching and static analysis script.")
 
-    parser.add_argument("-p", "--path", type=str, required=True,
+    parser.add_argument("--path", type=str, required=True,
                         help="Path to the directory you want to watch.")
-    parser.add_argument("-a", "--agent-root", type=str, required=True,
+    parser.add_argument("--agent-root", type=str, required=True,
                         help="Path to the agent root.")
-    parser.add_argument("-s", "--server-cwd", type=str, default=None,
+    parser.add_argument("--server-cwd", type=str, default=None,
                         help="Working directory of the MCP server process"
                         "(defaults to parent of agent-root)")
-    parser.add_argument("-m", "--mirror-root", type=str, required=True,
+    parser.add_argument("--mirror-root", type=str, default="./mirror/",
                         help="AgentGuard directory for verified log mirrors")
+    parser.add_argument("--model", type=str, default=DEFAULT_MODEL)
 
     args = parser.parse_args()
 
@@ -52,6 +55,7 @@ if __name__ == "__main__":
             parser.error(f"Mirror root must not be inside {protected}; the testbed can write there.")
 
     event_handler = AGEventHandler(args.agent_root, args.path, args.mirror_root, args.server_cwd)
+    registry.configure(mirror_root / "history.sqlite3", model=args.model)
     event_handler.resume()
 
     observer = Observer()

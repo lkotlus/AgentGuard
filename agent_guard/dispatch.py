@@ -47,6 +47,7 @@ def dispatch_finding(server_cwd: Path, allowed_path: Path, log: LogLine) -> None
 
     registry.submit(log, view, confidences, decision)
 
+
 #
 # RISK CALCULATION HELPERS
 #

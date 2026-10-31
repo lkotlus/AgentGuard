@@ -3,7 +3,6 @@ Session registry! We need to map session IDs to agents.
 """
 
 import asyncio
-import json
 import logging
 import threading
 from functools import partial
@@ -14,15 +13,6 @@ from agent_guard.history import HistoryStore
 from agent_guard.models import AgentView, Confidences, LogLine
 
 
-def load_task_instructions(paths: list[str]) -> dict[str, str]:
-    """Maps task id to instruction from task JSON files."""
-    tasks: dict[str, str] = {}
-    for p in paths:
-        for t in json.loads(Path(p).read_text(encoding="utf-8")):
-            tasks[t["id"]] = t["instruction"]
-    return tasks
-
-
 class SessionRegistry:
     def __init__(self):
         self._sessions: dict[str, AgentSession] = {}
@@ -31,12 +21,10 @@ class SessionRegistry:
         self._thread = threading.Thread(target=self._loop.run_forever, daemon=True)
         self._thread.start()
         self._store: HistoryStore | None = None
-        self._tasks: dict[str, str] = {}
         self._model = DEFAULT_MODEL
 
-    def configure(self, db_path: Path, tasks: dict[str, str], model: str = DEFAULT_MODEL) -> None:
+    def configure(self, db_path: Path, model: str = DEFAULT_MODEL) -> None:
         self._store = HistoryStore(db_path)
-        self._tasks = tasks
         self._model = model
 
     def _get_or_create(self, session_id: str) -> AgentSession:
@@ -44,7 +32,7 @@ class SessionRegistry:
             raise RuntimeError("registry.configure() must be called before logs are dispatched.")
         with self._lock:
             if session_id not in self._sessions:
-                self._sessions[session_id] = AgentSession(session_id, self._store, self._tasks, self._model)
+                self._sessions[session_id] = AgentSession(session_id, self._store, self._model)
             return self._sessions[session_id]
 
     def submit(self, log: LogLine, view: AgentView, confidences: Confidences, decision: Decision) -> None:

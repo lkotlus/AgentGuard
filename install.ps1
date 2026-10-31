@@ -28,6 +28,7 @@ iex "$PyName -m venv venv"
 iex "venv\Scripts\python.exe -m pip install -r requirements.txt"
 
 ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
 
 Start-Sleep -Seconds 1
 Clear-Host
