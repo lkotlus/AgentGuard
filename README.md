@@ -16,6 +16,8 @@ The general flow of data works as follows:
     - If the risk score is at least 10%, the log is passed to the analysis agent for further review
     - If the risk score is lower than 10%, it is supressed automatically
 
+The assessment agent may require fine-tuning in the future, and more signature-based analysis would be nice.
+
 ### Installation
 Both Linux and Windows require `python3` to be installed. The name of the binary on your `PATH` is detected automatically.
 

@@ -36,9 +36,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="File watching and static analysis script.")
 
     parser.add_argument("--path", type=str, required=True,
-                        help="Path to the directory you want to watch.")
+                        help="Path to the directory you want to watch (typically adop-cyse/corpus/).")
     parser.add_argument("--agent-root", type=str, required=True,
-                        help="Path to the agent root.")
+                        help="Path to the agent root (typically adop-cyse/testbed-repo/).")
     parser.add_argument("--server-cwd", type=str, default=None,
                         help="Working directory of the MCP server process"
                         "(defaults to parent of agent-root.)")
