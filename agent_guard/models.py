@@ -13,6 +13,7 @@ from typing import Any
 # Log tracking
 #
 
+
 class Status(Enum):
     ERROR   = "error"
     SUCCESS = "success"
@@ -73,6 +74,7 @@ class AgentView:
 # Scoring
 #
 
+
 @dataclass(frozen=True)
 class Confidences:
     tool_risk: float = 0.0
@@ -114,6 +116,7 @@ UNKNOWN_TOOL_RISK = 0.3
 #
 # RAG
 #
+
 
 @dataclass(frozen=True)
 class Finding:
