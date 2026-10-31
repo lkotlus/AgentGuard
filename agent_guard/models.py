@@ -63,7 +63,6 @@ class AgentView:
     seq: int
     timestamp: datetime
     duration_ms: float
-    task_id: str
     session_id: str
 
     @classmethod

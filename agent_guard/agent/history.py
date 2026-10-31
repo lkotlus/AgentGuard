@@ -28,12 +28,12 @@ TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_./:-]{3,}")
 FLOW_MIN = 3
 MIN_SCORE = 1.0 # relevance floor
 EMBED_TEXT_LIMIT = 2000
+EMBED_WEIGHT = 1.5
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS calls (
     session_id    TEXT    NOT NULL,
     seq           INTEGER NOT NULL,
-    task_id       TEXT    NOT NULL,
     view          TEXT    NOT NULL,
     keys          TEXT    NOT NULL,
     result_tokens TEXT    NOT NULL,
@@ -142,9 +142,9 @@ class HistoryStore:
     async def add(self, v: AgentView) -> None:
         emb = await self._embed(_embed_text(v))
         self._db.execute(
-            "INSERT OR REPLACE INTO calls VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO calls VALUES (?, ?, ?, ?, ?, ?)",
             (
-                v.session_id, v.seq, v.task_id, _view_to_json(v),
+                v.session_id, v.seq, _view_to_json(v),
                 json.dumps(sorted(_resource_keys(v))),
                 json.dumps(sorted(_tokens(v.result_summary))),
                 array("f", emb).tobytes() if emb else None,
@@ -202,11 +202,9 @@ class HistoryStore:
             flow = len(cur_tokens & set(json.loads(result_tokens)))
             if flow >= FLOW_MIN:
                 score += 1.5 * min(flow / 8, 1.0)
-            if past.task_id == v.task_id:
-                score += 0.5
             emb = _unpack(blob)
             if cur_emb and emb:
-                score += max(0.0, _cos(cur_emb, emb))
+                score += EMBED_WEIGHT * max(0.0, _cos(cur_emb, emb))
             if score >= MIN_SCORE:
                 scored.append((score, past))
 
