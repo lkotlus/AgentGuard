@@ -9,9 +9,9 @@ from typing import Literal
 import ollama
 from pydantic import BaseModel, Field, ValidationError
 
-from agent_guard.history import Finding, HistoryStore
+from agent_guard.agent.history import Finding, HistoryStore
+from agent_guard.agent.prompts import CATEGORIES, SYSTEM_PROMPT, build_review
 from agent_guard.models import AgentView, Confidences
-from agent_guard.prompts import CATEGORIES, SYSTEM_PROMPT, build_review
 
 # This is mostly nonsense, I wouldn't worry about it
 DEFAULT_MODEL = "qwen2.5:7b"

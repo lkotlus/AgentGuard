@@ -4,8 +4,8 @@ import argparse
 from pathlib import Path
 from watchdog.observers import Observer
 
+from agent_guard.agent.agent import DEFAULT_MODEL
 from agent_guard.event_handler import AGEventHandler
-from agent_guard.agent import DEFAULT_MODEL
 from agent_guard.registry import registry
 
 

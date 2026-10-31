@@ -7,7 +7,7 @@ import json
 from dataclasses import fields
 from typing import Any
 
-from agent_guard.history import Finding
+from agent_guard.agent.history import Finding
 from agent_guard.models import AgentView, Confidences, Status
 
 HISTORY_FIELD_LIMIT = 240

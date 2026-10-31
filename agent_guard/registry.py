@@ -8,8 +8,8 @@ import threading
 from functools import partial
 from pathlib import Path
 
-from agent_guard.agent import DEFAULT_MODEL, AgentSession, Decision
-from agent_guard.history import HistoryStore
+from agent_guard.agent.agent import DEFAULT_MODEL, AgentSession, Decision
+from agent_guard.agent.history import HistoryStore
 from agent_guard.models import AgentView, Confidences, LogLine
 
 
