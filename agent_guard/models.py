@@ -4,7 +4,7 @@ Datclasses, enums, and whatnot.
 
 from datetime import datetime
 from dataclasses import dataclass, field, fields
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
@@ -136,7 +136,7 @@ class Finding:
 Decision = Literal["suppressed", "reviewing", "cleared", "alert", "error"]
 
 
-class Level(Enum):
+class Level(StrEnum):
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"

@@ -3,7 +3,10 @@ I swear that this is the CLOSEST I will get to front-end development. Once
 we're going for a super cool live-demo or something like that and back-end
 is all ready to go, we can have Alex's agent handle some sort of live 
 front-end or generated HTML report but I REFUSE SUCH FRIVOLITIES. I have
-*standards*
+*standards*.
+
+This whole file is mostly vibe-coded, so please keep that in mind when
+casting the due judgement on the general state of things.
 """
 
 import copy

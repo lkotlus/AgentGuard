@@ -32,14 +32,14 @@ def print_banner(watch_path: Path, agent_root: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="File watching and static analysis script.")
     parser.add_argument("-p", "--path", type=str, required=True,
-                        help="Path to the directory you want to watch.")
+                        help="Path to the directory you want to watch (typically adop-cyse/corpus/).")
     parser.add_argument("-a", "--agent-root", type=str, required=True,
-                        help="Path to the agent root.")
+                        help="Path to the agent root (typically adop-cyse/testbed-repo/).")
     parser.add_argument("-s", "--server-cwd", type=str, default=None,
-                        help="Working directory of the MCP server process "
+                        help="Working directory of the MCP server process."
                         "(defaults to parent of agent-root)")
-    parser.add_argument("-m", "--mirror-root", type=str, required=True,
-                        help="AgentGuard directory for verified log mirrors")
+    parser.add_argument("-m", "--mirror-root", type=str, default="./mirror/",
+                        help="Directory for log mirrors, AG logs, and the RAG DB.")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="Ollama model for the analyst.")
     parser.add_argument("--plain", action="store_true",
                         help="Disables the TUI.")
