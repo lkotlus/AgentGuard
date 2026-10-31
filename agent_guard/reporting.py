@@ -91,7 +91,7 @@ class Reporter:
         self._emit(Event(kind="integrity", time=_now(), level=Level.CRITICAL, target=str(path), message=message))
 
     def system(self, level: str, message: str) -> None:
-        self._emit(Event(kind="system", time=_now(), level=Level[level], message=message))
+        self._emit(Event(kind="system", time=_now(), level=Level(level), message=message))
 
     #
     # State (Dijkstra was so right)
