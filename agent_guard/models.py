@@ -8,6 +8,7 @@ from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
+
 #
 # Log tracking
 #
@@ -78,6 +79,8 @@ class AgentView:
     def from_log_line(cls, line: LogLine, resolved_paths: tuple[ResolvedPath, ...]) -> "AgentView":
         shared = {f: getattr(line, f) for f in cls.__dataclass_fields__ if f != "resolved_paths"}
         return cls(**shared, resolved_paths=tuple(resolved_paths))
+
+
 #
 # Scoring
 #
@@ -141,6 +144,8 @@ class Finding:
 # Reporting
 #
 
+
+
 Decision = Literal["suppressed", "reviewing", "cleared", "alert", "error"]
 
 
@@ -189,3 +194,10 @@ class Snapshot:
     order: list[str]    # session ids in decending order of recency
     integrity: list[Event]
     notices: list[Event]
+
+
+@dataclass(frozen=True)
+class Incident:
+    seq: int
+    chain: list[int]
+    cites: list[int]

@@ -27,7 +27,15 @@ from rich.table import Table
 from rich.text import Text
 
 from agent_guard.agent.prompts import CATEGORIES
-from agent_guard.models import Decision, Event, Level, LogLine, Row, Snapshot
+from agent_guard.models import (
+    Decision,
+    Event,
+    Level,
+    LogLine,
+    Row,
+    Snapshot,
+    Incident
+)
 
 
 def _now() -> str:
@@ -187,28 +195,16 @@ class LibraryLogHandler(logging.Handler):
         reporter.system(level, f"[{record.name}] {message}", traceback=trace)
 
 
-def incidents(rows: dict[int, Row]) -> list[list[int]]:
-    """Groups alerts that share evidence."""
-    parent: dict[int, int] = {}
-
-    def find(x: int) -> int:
-        parent.setdefault(x, x)
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    for r in rows.values():
-        if r.decision in ("alert", "error"):
-            find(r.seq)
-            for s in r.evidence:
-                if s in rows:
-                    parent[find(s)] = find(r.seq)
-
-    groups: dict[int, list[int]] = {}
-    for x in parent:
-        groups.setdefault(find(x), []).append(x)
-    return sorted((sorted(g) for g in groups.values()), key=lambda g: g[0])
+def incidents(rows: dict[int, Row]) -> list[Incident]:
+    out = []
+    for r in sorted(rows.values(), key=lambda r: r.seq):
+        if r.decision not in ("alert", "error"):
+            continue
+        cited = [s for s in r.evidence if s != r.seq and s in rows]
+        cites = sorted(s for s in cited if rows[s].decision in ("alert", "error"))
+        chain = sorted({r.seq, *(s for s in cited if s not in cites)})
+        out.append(Incident(r.seq, chain, cites))
+    return out
 
 
 #
@@ -262,10 +258,12 @@ class LiveView:
     """Such a fancy TUI that you'd think I'm a Rust dev."""
 
     def __init__(self, source: Reporter, *, watch: str, mirror: str, model: str,
-                 max_rows: int = 14, max_sessions: int = 2, console: Console | None = None):
+                 max_rows: int = 14, max_sessions: int = 2, max_incidents: int = 6,
+                 console: Console | None = None):
         self.source = source
         self.watch, self.mirror, self.model = watch, mirror, model
         self.max_rows, self.max_sessions = max_rows, max_sessions
+        self.max_incidents = max_incidents
         self._live = Live(
             console=console or Console(), get_renderable=self.render,
             refresh_per_second=4, redirect_stdout=True, redirect_stderr=True,
@@ -298,25 +296,33 @@ class LiveView:
             box=box.ROUNDED,
         )
 
-    def _alerts(self, snap: Snapshot, found: list[tuple[str, list[int]]]) -> Panel:
+    def _alerts(self, snap: Snapshot, found: list[tuple[str, Incident]]) -> Panel:
         grid = Table.grid(expand=True)
         grid.add_column(ratio=1)
+
         for e in snap.integrity:
             grid.add_row(Text.assemble(
                 (" TAMPER ", "bold white on red"), "  ",
                 (f"{e.time[11:19]}  {_clean(e.target)}: {_clean(e.message)}", "red"),
             ))
-        for sid, chain in found:
-            rows = snap.sessions[sid]
-            alerts = [rows[s] for s in chain if rows[s].decision in ("alert", "error")]
-            labels = " · ".join(dict.fromkeys(verdict_label(r) for r in alerts))
-            chain_text = " → ".join(map(str, chain))
-            latest = alerts[-1]
-            grid.add_row(Text.assemble(
+
+        shown = found[-self.max_incidents:]
+        if len(found) > len(shown):
+            grid.add_row(Text(f"… {len(found) - len(shown)} earlier incidents", style="dim"))
+
+        for sid, inc in shown:
+            r = snap.sessions[sid][inc.seq]
+            chain_text = " → ".join(map(str, inc.chain))
+            line = Text.assemble(
                 ("■ ", "bold red"), (f"{_short(sid)}  ", "dim"),
-                (f"seq {chain_text}", "bold"), "   ", (labels, "red"),
-            ))
-            grid.add_row(Text(f"   latest: seq {latest.seq} {latest.tool} → {_clip(latest.target, 70)}", style="dim"))
+                (f"seq {chain_text}", "bold"), "   ", (verdict_label(r), "red"),
+            )
+            if inc.cites:
+                line.append(f"   cites {', '.join(map(str, inc.cites))}", style="dim red")
+            grid.add_row(line)
+
+            detail = _clip(r.reasoning, 100) if r.reasoning else f"→ {_clip(r.target, 70)}"
+            grid.add_row(Text(f"   {r.tool}: {detail}", style="dim"))
 
         alerting = bool(snap.integrity or found)
         return Panel(
