@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, ValidationError
 from agent_guard.agent.history import HistoryStore
 from agent_guard.agent.prompts import SYSTEM_PROMPT, build_review
 from agent_guard.models import AgentView, Confidences, Finding
+from agent_guard.paths import describe
 
 
 # These are magic, I wouldn't worry about it
@@ -68,8 +69,9 @@ class AgentSession:
 
             if decision == "alert":
                 sigs = ", ".join(confidences.signatures()) or "combined deterministic score"
+                where = describe(view.resolved_paths) if view.resolved_paths else f"on {view.target_resource}"
                 self.store.add_finding(self.session_id, Finding(
-                    view.seq, "signature", sigs, f"{view.server}.{view.tool_name} on {view.target_resource}"
+                    view.seq, "signature", sigs, f"{view.server}.{view.tool_name}: {where}"
                 ))
                 return None
             if decision == "suppress":

@@ -245,7 +245,7 @@ class PlainView:
 
         head = f"{t}  {_short(e.session_id):<14}  seq {e.seq:>4}  {_clip(e.tool, 26):<26}  {e.decision.upper():<10}" #type: ignore
         if e.decision == "alert" and e.source == "signature":
-            tail = f"{verdict_label(e)}  target {_clip(e.target, 60)}"
+            tail = f"{verdict_label(e)}  {_clip(e.reasoning or 'target ' + str(e.target), 100)}"
         elif e.decision == "alert":
             evidence = ",".join(map(str, e.evidence)) or "-"
             tail = f"{verdict_label(e)}  evidence {evidence}  \"{_clip(e.reasoning or '', 160)}\""

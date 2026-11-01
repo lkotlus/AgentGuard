@@ -24,7 +24,7 @@ from typing import Any
 import httpx
 import ollama
 
-from agent_guard.models import AgentView, Finding, Status
+from agent_guard.models import AgentView, Finding, ResolvedPath, Status
 from agent_guard.reporting import reporter
 
 
@@ -88,6 +88,7 @@ def _view_from_json(s: str) -> AgentView:
     d = json.loads(s)
     d["result_status"] = Status(d["result_status"])
     d["timestamp"] = datetime.fromisoformat(d["timestamp"])
+    d["resolved_paths"] = tuple(ResolvedPath(**r) for r in d.get("resolved_paths", ()))
     return AgentView(**d)
 
 
@@ -116,12 +117,14 @@ def _norm(p: str) -> str:
 def _resource_keys(v: AgentView) -> set[str]:
     """Identifiers for what a call touched: paths, URLs, memory keys."""
     args = v.arguments
-    keys = {_norm(v.target_resource)}
-    keys |= {_norm(str(args[a])) for a in ("path", "target_path", "url") if a in args}
+    if v.resolved_paths:
+        keys = {r.resolved for r in v.resolved_paths if r.resolved is not None}
+    else:
+        keys = {_norm(v.target_resource)}
+    if "url" in args:
+        keys.add(_norm(str(args["url"])))
     if "namespace" in args and "key" in args:
         keys.add(f"memory://{args['namespace']}/{args['key']}")
-    if "pathspec" in args:
-        keys |= {_norm(t) for t in str(args["pathspec"]).split() if not t.startswith("-")}
     return {k for k in keys if k != "." and not GENERIC_KEY_RE.match(k)}
 
 

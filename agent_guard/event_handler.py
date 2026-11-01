@@ -17,6 +17,7 @@ from watchdog.events import (
 from agent_guard.dispatch import dispatch_finding
 from agent_guard.models import LogLine, TrackedFile
 from agent_guard.reporting import reporter
+from agent_guard.paths import Resolver
 
 LOG_SUFFIX = ".jsonl"
 CHUNK = 1 << 16
@@ -63,6 +64,7 @@ class AGEventHandler(FileSystemEventHandler):
         self.server_cwd = Path(server_cwd).resolve() if server_cwd else self.allowed_path.parent
         self.files: dict[Path, TrackedFile] = {}
         self.mirror_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.resolver = Resolver(self.allowed_path, self.server_cwd)
 
     @staticmethod
     def _is_log(path: str | Path) -> bool:
@@ -159,7 +161,7 @@ class AGEventHandler(FileSystemEventHandler):
             return
 
         for fline in flines:
-            dispatch_finding(self.server_cwd, self.allowed_path, fline)
+            dispatch_finding(self.resolver, fline)
 
     def on_created(self, event):
         if isinstance(event, FileCreatedEvent) and self._is_log(str(event.src_path)):

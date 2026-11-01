@@ -52,6 +52,15 @@ class LogLine:
 
 
 @dataclass(frozen=True)
+class ResolvedPath:
+    """Where a given path argument truly lands."""
+    arg: str
+    raw: str
+    resolved: str | None
+    inside: bool
+
+
+@dataclass(frozen=True)
 class AgentView:
     arguments: dict[str, Any]
     result_status: Status
@@ -59,15 +68,16 @@ class AgentView:
     server: str
     tool_name: str
     target_resource: str
+    resolved_paths: tuple[ResolvedPath, ...]
     seq: int
     timestamp: datetime
     duration_ms: float
     session_id: str
 
     @classmethod
-    def from_log_line(cls, line: LogLine) -> "AgentView":
-        return cls(**{f: getattr(line, f) for f in cls.__dataclass_fields__})
-
+    def from_log_line(cls, line: LogLine, resolved_paths: tuple[ResolvedPath, ...]) -> "AgentView":
+        shared = {f: getattr(line, f) for f in cls.__dataclass_fields__ if f != "resolved_paths"}
+        return cls(**shared, resolved_paths=tuple(resolved_paths))
 #
 # Scoring
 #
