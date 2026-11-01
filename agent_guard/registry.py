@@ -45,7 +45,10 @@ class SessionRegistry:
     def submit(self, log: LogLine, view: AgentView, confidences: Confidences, decision: Decision) -> None:
         """Synchronous entry point :)"""
         session = self._get_or_create(view.session_id)
-        future = asyncio.run_coroutine_threadsafe(session.ingest(view, confidences, decision), self._loop)
+        future = asyncio.run_coroutine_threadsafe(
+            session.ingest(view, log.task_id, confidences, decision),
+            self._loop
+        )
         future.add_done_callback(partial(self._handle_result, log, decision, confidences.overall))  # type: ignore
 
     def _handle_result(self, log: LogLine, decision: Decision, score: float, future) -> None:

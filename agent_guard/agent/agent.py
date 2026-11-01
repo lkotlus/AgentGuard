@@ -9,25 +9,31 @@ from typing import Literal
 import ollama
 from pydantic import BaseModel, Field, ValidationError
 
-from agent_guard.agent.history import Finding, HistoryStore
-from agent_guard.agent.prompts import CATEGORIES, SYSTEM_PROMPT, build_review
-from agent_guard.models import AgentView, Confidences
+from agent_guard.agent.history import HistoryStore
+from agent_guard.agent.prompts import SYSTEM_PROMPT, build_review
+from agent_guard.models import AgentView, Confidences, Finding
 
-# This is mostly nonsense, I wouldn't worry about it
+
+# These are magic, I wouldn't worry about it
 DEFAULT_MODEL = "qwen2.5:7b"
 RECENT_WINDOW = 6
 RELATED_K = 6
 MAX_FINDINGS = 20
 MAX_ATTEMPTS = 2
-MODEL_OPTIONS = {"temperature": 0, "seed": 587, "num_ctx": 8192} 
+MODEL_OPTIONS = {"temperature": 0, "seed": 587, "num_ctx": 8192}
 
 Decision = Literal["alert", "review", "suppress"]
 Category = Literal["NONE", "ASI01", "ASI02", "ASI03", "ASI04", "ASI05", "ASI06", "ASI08", "ASI10"]
 
 
+class AnalystError(Exception):
+    """The analyst was reachable but couldn't reach a verdict."""
+
+
 class Verdict(BaseModel):
-    # Field order is generation order: reasoning before the decision.
-    reasoning: str = Field(description="What the call does, whether the task required it, and what the evidence shows.")
+    reasoning: str = Field(
+        description="What the call does, whether it is on the golden path, and what the evidence shows."
+    )
     evidence_seqs: list[int] = Field(description="seq numbers of the calls that support the verdict.")
     category: Category
     alert: bool
@@ -47,10 +53,18 @@ class AgentSession:
         self._client = client or ollama.AsyncClient()
         self._lock = asyncio.Lock()
 
-    async def ingest(self, view: AgentView, confidences: Confidences, decision: Decision) -> Verdict | None:
-        """Records every line, only reviews logs dispatched to the analyst."""
+    async def ingest(
+        self,
+        view: AgentView,
+        task_id: str,
+        confidences: Confidences,
+        decision: Decision
+    ) -> Verdict | None:
+        """Records every line, only reviews logs dispatched to the analyst. task_id is used
+        to find the task instance, it is never provided as context (NOT IN MY CODEBASE)."""
         async with self._lock:
-            await self.store.add(view)
+            task_key, ordinal = self.store.task_instance(self.session_id, task_id)
+            await self.store.add(view, task_key, ordinal)
 
             if decision == "alert":
                 sigs = ", ".join(confidences.signatures()) or "combined deterministic score"
@@ -61,21 +75,18 @@ class AgentSession:
             if decision == "suppress":
                 return None
 
-            verdict = await self._evaluate(view, confidences)
-            if verdict.alert:
-                self._record(view, verdict)
-            return verdict
+            # Don't store the verdict as a finding, it leads to a feedback loop if you do
+            return await self._evaluate(view, task_key, ordinal, confidences)
 
-    async def _evaluate(self, view: AgentView, confidences: Confidences) -> Verdict:
-        recent = self.store.recent(self.session_id, view.seq, RECENT_WINDOW)
-        related = self.store.related(view, {v.seq for v in recent} | {view.seq}, RELATED_K)
-        findings = self.store.findings(self.session_id, MAX_FINDINGS)
+    async def _evaluate(self, view: AgentView, task_key: str, ordinal: int, confidences: Confidences) -> Verdict:
+        recent = self.store.recent(self.session_id, task_key, view.seq, RECENT_WINDOW)
+        related = self.store.related(view, task_key, {v.seq for v in recent} | {view.seq}, RELATED_K)
+        findings = self.store.findings(view, task_key, MAX_FINDINGS)
+        shown = {view.seq} | {v.seq for v in recent} | {v.seq for v, _ in related} | {f.seq for f, _ in findings}
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": 
-                build_review(findings, recent, related, view, confidences)
-            },
+            {"role": "user", "content": build_review(findings, recent, related, view, ordinal, confidences)},
         ]
 
         error: Exception | None = None
@@ -88,7 +99,7 @@ class AgentSession:
             )
             content = response.message.content or ""
             try:
-                return self._validate(Verdict.model_validate_json(content), view)
+                return self._validate(Verdict.model_validate_json(content), shown)
             except ValidationError as e:
                 error = e
                 messages += [
@@ -97,22 +108,8 @@ class AgentSession:
                 ]
         raise AnalystError(f"No valid verdict after {MAX_ATTEMPTS} attempts: {error}")
 
-    def _validate(self, verdict: Verdict, view: AgentView) -> Verdict:
-        """Drop hallucinated evidence (I hate LLMs I hate LLMs I hate LLMs)"""
-        evidence = sorted({
-            s for s in verdict.evidence_seqs
-            if s == view.seq or (0 < s < view.seq and self.store.has(self.session_id, s))
-        })
+    @staticmethod
+    def _validate(verdict: Verdict, shown: set[int]) -> Verdict:
+        """Only report evidence as logs truly shown to the agent."""
+        evidence = sorted(set(verdict.evidence_seqs) & shown)
         return verdict.model_copy(update={"evidence_seqs": evidence})
-
-    def _record(self, view: AgentView, verdict: Verdict) -> None:
-        label = f"{verdict.category} {CATEGORIES.get(verdict.category, 'Uncategorized')}"
-        self.store.add_finding(self.session_id, Finding(view.seq, "analyst", label, verdict.reasoning))
-        for s in verdict.evidence_seqs:
-            if s != view.seq:
-                self.store.add_finding(self.session_id, Finding(
-                    s, "analyst-linked", label, f"implicated by the review of seq {view.seq}"
-                ))
-
-class AnalystError(Exception):
-    """The analyst was reached but couldn't produce anything."""
