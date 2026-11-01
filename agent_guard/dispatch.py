@@ -4,7 +4,6 @@ get dispatched to agents, which then further evaluate based on
 other evidence.
 """
 
-from pathlib import Path
 from typing import Any
 
 from agent_guard.models import (

@@ -16,8 +16,8 @@ from watchdog.events import (
 
 from agent_guard.dispatch import dispatch_finding
 from agent_guard.models import LogLine, TrackedFile
-from agent_guard.reporting import reporter
 from agent_guard.paths import Resolver
+from agent_guard.reporting import reporter
 
 LOG_SUFFIX = ".jsonl"
 CHUNK = 1 << 16

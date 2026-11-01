@@ -27,7 +27,6 @@ import ollama
 from agent_guard.models import AgentView, Finding, ResolvedPath, Status
 from agent_guard.reporting import reporter
 
-
 # Literally just magic values (shut up about it)
 EMBED_MODEL = "nomic-embed-text"
 TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_./:-]{3,}")

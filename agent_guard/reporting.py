@@ -27,15 +27,7 @@ from rich.table import Table
 from rich.text import Text
 
 from agent_guard.agent.prompts import CATEGORIES
-from agent_guard.models import (
-    Decision,
-    Event,
-    Level,
-    LogLine,
-    Row,
-    Snapshot,
-    Incident
-)
+from agent_guard.models import Decision, Event, Incident, Level, LogLine, Row, Snapshot
 
 
 def _now() -> str:

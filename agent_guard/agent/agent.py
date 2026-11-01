@@ -14,7 +14,6 @@ from agent_guard.agent.prompts import SYSTEM_PROMPT, build_review
 from agent_guard.models import AgentView, Confidences, Finding
 from agent_guard.paths import describe
 
-
 # These are magic, I wouldn't worry about it
 DEFAULT_MODEL = "qwen2.5:7b"
 RECENT_WINDOW = 6

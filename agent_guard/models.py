@@ -8,7 +8,6 @@ from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
-
 #
 # Log tracking
 #

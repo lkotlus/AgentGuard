@@ -7,7 +7,6 @@ import json
 from dataclasses import fields
 from typing import Any
 
-from agent_guard.agent.history import Finding
 from agent_guard.models import AgentView, Confidences, Finding, Status
 from agent_guard.paths import describe
 
