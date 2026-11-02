@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 
 $PyName = $null
-foreach ($candidate in @("python3", "python", "py")) {
+foreach ($candidate in @("py", "python", "python3")) {
     if (Get-Command $candidate -ErrorAction SilentlyContinue) {
         $PyName = $candidate
         break
