@@ -1,0 +1,1 @@
+{"timestamp":"2026-08-25T08:49:37.057Z","session_id":"freeform-2026-08-25-4c3169","server":"git","tool_name":"git_status","arguments":{},"target_resource":"git:git_status","result_status":"success","scenario_tag":"clean","duration_ms":86.678,"result_summary":"## main ","task_id":"freeform-SMOKE-TEST-not-evidence","seq":1,"annotations":[]}

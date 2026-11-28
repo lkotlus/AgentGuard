@@ -1,0 +1,6 @@
+{
+ "records": 22,
+ "wall_s": 78.8,
+ "ollama_host": "http://<model-host>:11434",
+ "returncode": null
+}

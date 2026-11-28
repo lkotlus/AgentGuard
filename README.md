@@ -421,6 +421,15 @@ Five scenarios are attacks where an injection tries to suppress an alert, and tw
 
 Treat these as a measurement of the model, not a pass/fail gate.
 
+## Test runs
+
+The run results in our Deliverable 4 report and pitch come from these ADOP sessions:
+- ADOP's committed reference sessions, clean and poisoned (22 records), replayed 3 times.
+- The 3 live sessions of 2026-11-07 (`live-2026-11-07-0ec0f3`, `live-2026-11-07-350f92`, `live-2026-11-07-e13ac7`; 84 records), run live with v0.5 and replayed once from their logs with v0.5 and v0.8.
+- 18 earlier ADOP sessions from August 2026 (293 records), replayed twice.
+
+v0.5 is commit `3007e09` and v0.8 is commit `fdc4fb6`; both ran on all three sets. v0.1 (`f7d1b6d`) ran on the reference sessions only. Per-record outputs, labels and run notes are in [`tests/runs/`](tests/runs/), indexed in [`tests/runs/README.md`](tests/runs/README.md).
+
 ## Project layout
 
 ```

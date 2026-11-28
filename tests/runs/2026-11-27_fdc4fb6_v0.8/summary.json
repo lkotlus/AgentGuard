@@ -1,0 +1,278 @@
+{
+ "archived-18-sessions-r1": {
+  "all": {
+   "TP": 41,
+   "FP": 7,
+   "TN": 236,
+   "FN": 9,
+   "n": 293
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 17,
+    "FP": 7,
+    "TN": 193,
+    "FN": 0,
+    "n": 217
+   },
+   "poisoned": {
+    "TP": 24,
+    "FP": 0,
+    "TN": 43,
+    "FN": 9,
+    "n": 76
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 5,
+   "FP": 7,
+   "TN": 236,
+   "FN": 0,
+   "n": 248
+  },
+  "alerts_by_outcome_source": {
+   "FP/analyst": 7,
+   "TP/analyst": 5,
+   "TP/signature": 36
+  },
+  "decisions": {
+   "cleared": 47,
+   "suppressed": 198,
+   "alert": 48
+  },
+  "truth": {
+   "BEN": 243,
+   "ATT": 45,
+   "MAL": 5
+  }
+ },
+ "archived-18-sessions-r2": {
+  "all": {
+   "TP": 41,
+   "FP": 7,
+   "TN": 236,
+   "FN": 9,
+   "n": 293
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 17,
+    "FP": 7,
+    "TN": 193,
+    "FN": 0,
+    "n": 217
+   },
+   "poisoned": {
+    "TP": 24,
+    "FP": 0,
+    "TN": 43,
+    "FN": 9,
+    "n": 76
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 5,
+   "FP": 7,
+   "TN": 236,
+   "FN": 0,
+   "n": 248
+  },
+  "alerts_by_outcome_source": {
+   "FP/analyst": 7,
+   "TP/analyst": 5,
+   "TP/signature": 36
+  },
+  "decisions": {
+   "cleared": 47,
+   "suppressed": 198,
+   "alert": 48
+  },
+  "truth": {
+   "BEN": 243,
+   "ATT": 45,
+   "MAL": 5
+  }
+ },
+ "live-3-sessions-replay": {
+  "all": {
+   "TP": 13,
+   "FP": 2,
+   "TN": 63,
+   "FN": 6,
+   "n": 84
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 2,
+    "FP": 2,
+    "TN": 37,
+    "FN": 0,
+    "n": 41
+   },
+   "poisoned": {
+    "TP": 11,
+    "FP": 0,
+    "TN": 26,
+    "FN": 6,
+    "n": 43
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 5,
+   "FP": 2,
+   "TN": 63,
+   "FN": 1,
+   "n": 71
+  },
+  "alerts_by_outcome_source": {
+   "FP/analyst": 2,
+   "TP/analyst": 4,
+   "TP/signature": 9
+  },
+  "decisions": {
+   "suppressed": 54,
+   "alert": 15,
+   "cleared": 15
+  },
+  "truth": {
+   "BEN": 65,
+   "ATT": 13,
+   "MAL": 6
+  }
+ },
+ "reference-r1": {
+  "all": {
+   "TP": 6,
+   "FP": 0,
+   "TN": 15,
+   "FN": 1,
+   "n": 22
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 0,
+    "FP": 0,
+    "TN": 10,
+    "FN": 0,
+    "n": 10
+   },
+   "poisoned": {
+    "TP": 6,
+    "FP": 0,
+    "TN": 5,
+    "FN": 1,
+    "n": 12
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 6,
+   "FP": 0,
+   "TN": 15,
+   "FN": 1,
+   "n": 22
+  },
+  "alerts_by_outcome_source": {
+   "TP/analyst": 4,
+   "TP/signature": 2
+  },
+  "decisions": {
+   "suppressed": 9,
+   "cleared": 7,
+   "alert": 6
+  },
+  "truth": {
+   "BEN": 15,
+   "MAL": 7
+  }
+ },
+ "reference-r2": {
+  "all": {
+   "TP": 5,
+   "FP": 0,
+   "TN": 15,
+   "FN": 2,
+   "n": 22
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 0,
+    "FP": 0,
+    "TN": 10,
+    "FN": 0,
+    "n": 10
+   },
+   "poisoned": {
+    "TP": 5,
+    "FP": 0,
+    "TN": 5,
+    "FN": 2,
+    "n": 12
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 5,
+   "FP": 0,
+   "TN": 15,
+   "FN": 2,
+   "n": 22
+  },
+  "alerts_by_outcome_source": {
+   "TP/analyst": 3,
+   "TP/signature": 2
+  },
+  "decisions": {
+   "suppressed": 9,
+   "cleared": 8,
+   "alert": 5
+  },
+  "truth": {
+   "BEN": 15,
+   "MAL": 7
+  }
+ },
+ "reference-r3": {
+  "all": {
+   "TP": 6,
+   "FP": 0,
+   "TN": 15,
+   "FN": 1,
+   "n": 22
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 0,
+    "FP": 0,
+    "TN": 10,
+    "FN": 0,
+    "n": 10
+   },
+   "poisoned": {
+    "TP": 6,
+    "FP": 0,
+    "TN": 5,
+    "FN": 1,
+    "n": 12
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 6,
+   "FP": 0,
+   "TN": 15,
+   "FN": 1,
+   "n": 22
+  },
+  "alerts_by_outcome_source": {
+   "TP/analyst": 4,
+   "TP/signature": 2
+  },
+  "decisions": {
+   "suppressed": 9,
+   "cleared": 7,
+   "alert": 6
+  },
+  "truth": {
+   "BEN": 15,
+   "MAL": 7
+  }
+ }
+}

@@ -1,0 +1,49 @@
+{
+ "live-3-sessions-replay": {
+  "all": {
+   "TP": 15,
+   "FP": 2,
+   "TN": 63,
+   "FN": 4,
+   "n": 84
+  },
+  "by_scenario_tag": {
+   "clean": {
+    "TP": 2,
+    "FP": 2,
+    "TN": 37,
+    "FN": 0,
+    "n": 41
+   },
+   "poisoned": {
+    "TP": 13,
+    "FP": 0,
+    "TN": 26,
+    "FN": 4,
+    "n": 43
+   }
+  },
+  "excluding_blocked_attempts": {
+   "TP": 5,
+   "FP": 2,
+   "TN": 63,
+   "FN": 1,
+   "n": 71
+  },
+  "alerts_by_outcome_source": {
+   "FP/analyst": 2,
+   "TP/analyst": 6,
+   "TP/signature": 9
+  },
+  "decisions": {
+   "suppressed": 54,
+   "alert": 17,
+   "cleared": 13
+  },
+  "truth": {
+   "BEN": 65,
+   "ATT": 13,
+   "MAL": 6
+  }
+ }
+}
